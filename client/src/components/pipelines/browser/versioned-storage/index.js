@@ -44,6 +44,7 @@ import PipelineCodeForm from '../../version/code/forms/PipelineCodeForm';
 import UpdatePipelineToken from '../../../../models/pipelines/UpdatePipelineToken';
 import CreateItemForm from './forms/create-item-form';
 import EditPipelineForm from '../../version/forms/EditPipelineForm';
+import GenerateReportDialog from './dialogs/generate-report';
 import TABLE_MENU_KEYS from './table/table-menu-keys';
 import DOCUMENT_TYPES from './document-types';
 import styles from './versioned-storage.css';
@@ -115,6 +116,7 @@ class VersionedStorage extends localization.LocalizedReactComponent {
   state = {
     contents: [],
     editStorageDialog: false,
+    generateReportDialog: false,
     error: undefined,
     lastPage: 0,
     page: 0,
@@ -165,7 +167,8 @@ class VersionedStorage extends localization.LocalizedReactComponent {
     return {
       openHistoryPanel: this.openHistoryPanel,
       closeHistoryPanel: this.closeHistoryPanel,
-      openEditStorageDialog: this.openEditStorageDialog
+      openEditStorageDialog: this.openEditStorageDialog,
+      openGenerateReportDialog: this.openGenerateReportDialog
     };
   };
 
@@ -274,6 +277,14 @@ class VersionedStorage extends localization.LocalizedReactComponent {
   closeEditStorageDialog = () => {
     const {pipeline} = this.props;
     this.setState({editStorageDialog: false}, () => pipeline.fetch());
+  };
+
+  openGenerateReportDialog = () => {
+    this.setState({generateReportDialog: true});
+  };
+
+  closeGenerateReportDialog = () => {
+    this.setState({generateReportDialog: false});
   };
 
   openCreateDocumentDialog = (type) => {
@@ -633,6 +644,10 @@ class VersionedStorage extends localization.LocalizedReactComponent {
     hide();
   };
 
+  generateReport = (settings) => {
+    this.closeGenerateReportDialog();
+  };
+
   navigate = (path) => {
     const {router, pipelineId} = this.props;
     if (!router) {
@@ -759,7 +774,8 @@ class VersionedStorage extends localization.LocalizedReactComponent {
       error,
       lastPage,
       page,
-      selectedFile
+      selectedFile,
+      generateReportDialog
     } = this.state;
     const {
       editStorageDialog,
@@ -899,6 +915,11 @@ class VersionedStorage extends localization.LocalizedReactComponent {
           pending={pending}
           pipeline={pipeline.value}
           showRepositorySettings={false}
+        />
+        <GenerateReportDialog
+          visible={generateReportDialog}
+          onCancel={this.closeGenerateReportDialog}
+          onOk={this.generateReport}
         />
         {this.renderEditItemForm()}
       </div>

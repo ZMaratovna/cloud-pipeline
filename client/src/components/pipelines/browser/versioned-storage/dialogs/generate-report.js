@@ -12,7 +12,7 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- */
+*/
 
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -23,72 +23,59 @@ import {
   Input,
   DatePicker,
   Select,
-  Button
+  Button,
+  Checkbox,
+  Radio
 } from 'antd';
 import moment from 'moment-timezone';
-import filtersAreEqual from './filters-are-equal';
-import UserName from '../../../../../special/UserName';
-import localization from '../../../../../../utils/localization';
-import styles from './history-filter.css';
+import UserName from '../../../../special/UserName';
+import Divider from '../../../../special/Divider';
+import localization from '../../../../../utils/localization';
+import styles from './generate-report.css';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
 
-function toLocalMomentDate (string) {
-  if (!string) {
-    return string;
-  }
-  const time = moment.utc(string);
-  if (time.isValid()) {
-    const localTime = moment.utc(string).toDate();
-    return moment(localTime);
-  }
-  return undefined;
-}
+const REPORT_FORMATS = {
+  docx: 'docx',
+  doc: 'doc'
+};
+const SPLIT_DIFFS_BY = {
+  revision: 'revision',
+  files: 'files'
+};
 
 @inject('usersInfo')
 @localization.localizedComponent
 @observer
-class HistoryFilter extends localization.LocalizedReactComponent {
+class GenerateReportDialog extends localization.LocalizedReactComponent {
   state = {
+    reportFormat: REPORT_FORMATS.docx,
     authors: [],
     extensions: undefined,
     dateFrom: undefined,
-    dateTo: undefined
+    dateTo: undefined,
+    includeDiffs: false,
+    splitDiffsBy: SPLIT_DIFFS_BY.revision,
+    downloadAsArchive: false
   };
 
-  componentDidMount () {
-    this.initializeFilters();
-  };
-
-  componentDidUpdate (prevProps) {
-    if (!filtersAreEqual(prevProps.filters, this.props.filters)) {
-      this.initializeFilters();
-    }
-  };
-
-  initializeFilters = () => {
-    const {filters} = this.props;
-    const stateFilters = {
-      extensions: (filters?.extensions || []).join(', '),
-      dateFrom: toLocalMomentDate(filters?.dateFrom),
-      dateTo: toLocalMomentDate(filters?.dateTo),
-      authors: (filters?.authors || []).slice()
-    };
-    this.setState(stateFilters);
-  };
-
-  get filters () {
+  get reportSettings () {
     const {
+      reportFormat,
       authors = [],
       extensions = '',
       dateFrom,
-      dateTo
+      dateTo,
+      includeDiffs,
+      splitDiffsBy,
+      downloadAsArchive
     } = this.state;
     const parsedExtensions = (extensions.trim())
       .split(',')
       .map(ext => ext.trim())
       .filter(Boolean);
     return {
+      reportFormat,
       authors,
       extensions: [...(new Set(parsedExtensions))],
       dateFrom: dateFrom
@@ -96,42 +83,48 @@ class HistoryFilter extends localization.LocalizedReactComponent {
         : undefined,
       dateTo: dateTo
         ? moment.utc(dateTo).format(DATE_FORMAT)
-        : undefined
+        : undefined,
+      includeDiffs,
+      splitDiffsBy: includeDiffs ? splitDiffsBy : undefined,
+      downloadAsArchive: includeDiffs ? downloadAsArchive : undefined
     };
-  }
-
-  get filtersIsEmpty () {
-    const filters = this.filters;
-    return !filters.dateFrom &&
-      !filters.dateTo &&
-      filters.authors.length === 0 &&
-      filters.extensions.length === 0;
   };
 
   handleOk = () => {
-    const {onChange} = this.props;
-    onChange && onChange(this.filters);
+    const {onOk} = this.props;
+    onOk && onOk(this.reportSettings);
+    this.resetSettings();
   };
 
   handleCancel = () => {
     const {onCancel} = this.props;
-    this.initializeFilters();
     onCancel && onCancel();
+    this.resetSettings();
   };
 
-  handleReset = () => {
+  resetSettings = () => {
     this.setState({
+      reportFormat: REPORT_FORMATS.docx,
       authors: [],
       extensions: undefined,
       dateFrom: undefined,
-      dateTo: undefined
-    }, this.handleOk);
+      dateTo: undefined,
+      includeDiffs: false,
+      splitDiffsBy: SPLIT_DIFFS_BY.revision,
+      downloadAsArchive: false
+    });
   };
 
   onUsersChange = (value) => {
     this.setState({
       authors: (value || []).slice()
     });
+  };
+
+  onChangeReportFormat = (value) => {
+    if (value && REPORT_FORMATS[value]) {
+      this.setState({reportFormat: value});
+    }
   };
 
   onDateChange = (fieldType, startOfTheDate) => (date) => {
@@ -155,6 +148,60 @@ class HistoryFilter extends localization.LocalizedReactComponent {
     });
   };
 
+  onToggleDiffs = (event) => {
+    const {checked} = event.target;
+    this.setState({includeDiffs: checked});
+  };
+
+  onSplitDiffsChange = (event) => {
+    const {value} = event.target;
+    if (SPLIT_DIFFS_BY[value]) {
+      this.setState({splitDiffsBy: value});
+    }
+  };
+
+  onDownloadAsArchiveChange = (event) => {
+    const {checked} = event.target;
+    this.setState({downloadAsArchive: checked});
+  };
+
+  renderReportFormat = () => {
+    const {reportFormat} = this.state;
+    return (
+      <Row
+        className={styles.reportsRow}
+        type="flex"
+        justify="space-between"
+      >
+        <span className={styles.label}>
+          Report format:
+        </span>
+        <div style={{width: '70%'}}>
+          <Select
+            style={{
+              width: 'calc(50% - 5px)',
+              textTransform: 'uppercase',
+              marginRight: 'auto'
+            }}
+            onChange={this.onChangeReportFormat}
+            value={reportFormat}
+          >
+            {Object.values(REPORT_FORMATS).map(format => (
+              <Select.Option
+                key={format}
+                value={format}
+                style={{textTransform: 'uppercase'}}
+              >
+                {format}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
+
+      </Row>
+    );
+  };
+
   renderUserRow = () => {
     const {usersInfo} = this.props;
     const pending = usersInfo && usersInfo.pending && !usersInfo.loaded;
@@ -164,7 +211,7 @@ class HistoryFilter extends localization.LocalizedReactComponent {
     const {authors = []} = this.state;
     return (
       <Row
-        className={styles.row}
+        className={styles.reportsRow}
         type="flex"
         justify="space-between"
       >
@@ -201,7 +248,7 @@ class HistoryFilter extends localization.LocalizedReactComponent {
     const {dateFrom, dateTo} = this.state;
     return (
       <Row
-        className={styles.row}
+        className={styles.reportsRow}
         type="flex"
         justify="space-between"
       >
@@ -232,7 +279,7 @@ class HistoryFilter extends localization.LocalizedReactComponent {
     const {extensions} = this.state;
     return (
       <Row
-        className={styles.row}
+        className={styles.reportsRow}
         type="flex"
         justify="space-between"
       >
@@ -250,24 +297,60 @@ class HistoryFilter extends localization.LocalizedReactComponent {
     );
   };
 
+  renderDiffControls = () => {
+    const {splitDiffsBy, downloadAsArchive} = this.state;
+    return (
+      <Row type="flex">
+        <div className={styles.diffRadioGroup}>
+          <Radio.Group
+            onChange={this.onSplitDiffsChange}
+            value={splitDiffsBy}
+          >
+            <Radio
+              value={SPLIT_DIFFS_BY.revision}
+              className={styles.diffRadioBtn}
+            >
+              Split changes by <b>revision</b>
+            </Radio>
+            <Radio
+              value={SPLIT_DIFFS_BY.files}
+              className={styles.diffRadioBtn}
+            >
+              Split changes by <b>files</b>
+            </Radio>
+          </Radio.Group>
+          <Checkbox
+            checked={downloadAsArchive}
+            onChange={this.onDownloadAsArchiveChange}
+            style={{padding: '5px 0'}}
+          >
+            <span className={styles.userSelectNone}>
+              Save changes separately (download report as archive)
+            </span>
+          </Checkbox>
+        </div>
+      </Row>
+    );
+  };
+
   render () {
     const {visible} = this.props;
+    const {includeDiffs} = this.state;
     const footer = (
       <Row
         type="flex"
         justify="space-between"
       >
         <Button
-          onClick={this.handleReset}
-          disabled={this.filtersIsEmpty}
+          onClick={this.handleCancel}
         >
-          RESET
+          Cancel
         </Button>
         <Button
           type="primary"
           onClick={this.handleOk}
         >
-          APPLY
+          Download report
         </Button>
       </Row>);
     return (
@@ -275,27 +358,36 @@ class HistoryFilter extends localization.LocalizedReactComponent {
         visible={visible}
         onOk={this.handleOk}
         onCancel={this.handleCancel}
-        bodyStyle={{padding: '40px 20px'}}
+        bodyStyle={{padding: '20px'}}
         footer={footer}
+        title="Generate report"
       >
+        {this.renderReportFormat()}
+        <Divider />
+        <span className={styles.filterGroupHeader}>
+          Revision filters
+        </span>
         {this.renderUserRow()}
         {this.renderDateRow()}
         {this.renderExtensionsRow()}
+        <Checkbox
+          onChange={this.onToggleDiffs}
+          checked={includeDiffs}
+          style={{padding: '5px 0', userSelect: 'none'}}
+        >
+          Include file diffs
+        </Checkbox>
+        {includeDiffs && <Divider />}
+        {includeDiffs && this.renderDiffControls()}
       </Modal>
     );
   };
 }
 
-HistoryFilter.PropTypes = {
-  filters: PropTypes.shape({
-    authors: PropTypes.array,
-    dateFrom: PropTypes.string,
-    dateTo: PropTypes.string,
-    extensions: PropTypes.array
-  }),
-  onChange: PropTypes.func,
+GenerateReportDialog.PropTypes = {
+  visible: PropTypes.bool,
   onCancel: PropTypes.func,
-  userNames: PropTypes.array
+  onOk: PropTypes.func
 };
 
-export default HistoryFilter;
+export default GenerateReportDialog;

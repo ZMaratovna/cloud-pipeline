@@ -21,8 +21,6 @@ import {
   Row,
   Col,
   Button,
-  Menu,
-  Dropdown,
   Icon
 } from 'antd';
 import localization from '../../../../../utils/localization';
@@ -39,7 +37,9 @@ class VersionedStorageHeader extends localization.LocalizedReactComponent {
   };
 
   onGenerateReportClick = (event) => {
-    event && event.stopPropagation();
+    const {actions = {}} = this.props;
+    const {openGenerateReportDialog} = actions;
+    openGenerateReportDialog && openGenerateReportDialog();
   };
 
   onHistoryBtnClick = () => {
@@ -111,7 +111,7 @@ class VersionedStorageHeader extends localization.LocalizedReactComponent {
             <Row type="flex" justify="end">
               <Button
                 size="small"
-                onClick={(event) => this.onRunClick(event)}
+                onClick={this.onRunClick}
                 className={styles.controlBtn}
                 disabled
               >
@@ -120,9 +120,8 @@ class VersionedStorageHeader extends localization.LocalizedReactComponent {
               <Button
                 size="small"
                 type="primary"
-                onClick={(event) => this.onGenerateReportClick(event)}
+                onClick={this.onGenerateReportClick}
                 className={styles.controlBtn}
-                disabled
               >
                 Generate report
               </Button>
