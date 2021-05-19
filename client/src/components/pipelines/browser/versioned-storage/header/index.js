@@ -155,11 +155,10 @@ VersionedStorageHeader.propTypes = {
   actions: PropTypes.shape({
     openHistoryPanel: PropTypes.func,
     closeHistoryPanel: PropTypes.func,
-    openEditStorageDialog: PropTypes.func
+    openEditStorageDialog: PropTypes.func,
+    openGenerateReportDialog: PropTypes.func
   }),
   readOnly: PropTypes.bool,
-  issuesPanelOpen: PropTypes.bool,
-  metadataPanelOpen: PropTypes.bool,
   controlsEnabled: PropTypes.bool,
   historyPanelOpen: PropTypes.bool
 };
