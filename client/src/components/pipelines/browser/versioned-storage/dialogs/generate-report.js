@@ -34,6 +34,7 @@ import localization from '../../../../../utils/localization';
 import styles from './generate-report.css';
 
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss.SSS';
+const ID_COMPONENT = 'report';
 
 const REPORT_FORMATS = {
   docx: 'docx',
@@ -89,6 +90,14 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
       downloadAsArchive: includeDiffs ? downloadAsArchive : undefined
     };
   };
+
+  getHtmlId = (id) => {
+    const {idPrefix} = this.props;
+    if (id && idPrefix) {
+      return `${idPrefix}_${ID_COMPONENT}_${id}`;
+    }
+    return null;
+  }
 
   handleOk = () => {
     const {onOk} = this.props;
@@ -176,7 +185,10 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
         <span className={styles.label}>
           Report format:
         </span>
-        <div style={{width: '70%'}}>
+        <div
+          style={{width: '70%'}}
+          id={this.getHtmlId('format-container')}
+        >
           <Select
             style={{
               width: 'calc(50% - 5px)',
@@ -197,7 +209,6 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
             ))}
           </Select>
         </div>
-
       </Row>
     );
   };
@@ -214,6 +225,7 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
         className={styles.reportsRow}
         type="flex"
         justify="space-between"
+        id={this.getHtmlId('author-container')}
       >
         <span className={styles.label}>
           Author:
@@ -255,8 +267,12 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
         <span className={styles.label}>
           Date:
         </span>
-        <div className={styles.dateRow}>
+        <div
+          className={styles.dateRow}
+          id={this.getHtmlId('date-container')}
+        >
           <DatePicker
+            className={this.getHtmlId('date-from')}
             format="YYYY-MM-DD"
             placeholder="From"
             value={dateFrom}
@@ -264,6 +280,7 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
             style={{width: '50%', marginRight: '10px'}}
           />
           <DatePicker
+            className={this.getHtmlId('date-to')}
             format="YYYY-MM-DD"
             placeholder="To"
             value={dateTo}
@@ -287,6 +304,7 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
           Changed file types:
         </span>
         <Input
+          id={this.getHtmlId('file-types')}
           style={{width: '70%'}}
           type="text"
           placeholder="Comma-separated file extensions"
@@ -305,16 +323,19 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
           <Radio.Group
             onChange={this.onSplitDiffsChange}
             value={splitDiffsBy}
+            id={this.getHtmlId('split-radio-group')}
           >
             <Radio
               value={SPLIT_DIFFS_BY.revision}
               className={styles.diffRadioBtn}
+              id={this.getHtmlId('split-by-revision')}
             >
               Split changes by <b>revision</b>
             </Radio>
             <Radio
               value={SPLIT_DIFFS_BY.files}
               className={styles.diffRadioBtn}
+              id={this.getHtmlId('split-by-files')}
             >
               Split changes by <b>files</b>
             </Radio>
@@ -323,6 +344,7 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
             checked={downloadAsArchive}
             onChange={this.onDownloadAsArchiveChange}
             style={{padding: '5px 0'}}
+            id={this.getHtmlId('download-archive')}
           >
             <span className={styles.userSelectNone}>
               Save changes separately (download report as archive)
@@ -343,12 +365,14 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
       >
         <Button
           onClick={this.handleCancel}
+          id={this.getHtmlId('cancel-btn')}
         >
           Cancel
         </Button>
         <Button
           type="primary"
           onClick={this.handleOk}
+          id={this.getHtmlId('ok-btn')}
         >
           Download report
         </Button>
@@ -370,13 +394,15 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
         {this.renderUserRow()}
         {this.renderDateRow()}
         {this.renderExtensionsRow()}
-        <Checkbox
-          onChange={this.onToggleDiffs}
-          checked={includeDiffs}
-          style={{padding: '5px 0', userSelect: 'none'}}
-        >
-          Include file diffs
-        </Checkbox>
+        <div id={this.getHtmlId('include-diffs-container')}>
+          <Checkbox
+            onChange={this.onToggleDiffs}
+            checked={includeDiffs}
+            style={{padding: '5px 0', userSelect: 'none'}}
+          >
+            Include file diffs
+          </Checkbox>
+        </div>
         {includeDiffs && <Divider />}
         {includeDiffs && this.renderDiffControls()}
       </Modal>
@@ -387,7 +413,8 @@ class GenerateReportDialog extends localization.LocalizedReactComponent {
 GenerateReportDialog.PropTypes = {
   visible: PropTypes.bool,
   onCancel: PropTypes.func,
-  onOk: PropTypes.func
+  onOk: PropTypes.func,
+  idPrefix: PropTypes.string
 };
 
 export default GenerateReportDialog;

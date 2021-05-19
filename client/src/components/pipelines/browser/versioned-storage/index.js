@@ -50,6 +50,7 @@ import DOCUMENT_TYPES from './document-types';
 import styles from './versioned-storage.css';
 
 const PAGE_SIZE = 20;
+const ID_PREFIX = 'vs';
 
 function getDocumentType (document) {
   if (!document || !document.type) {
@@ -920,6 +921,7 @@ class VersionedStorage extends localization.LocalizedReactComponent {
           visible={generateReportDialog}
           onCancel={this.closeGenerateReportDialog}
           onOk={this.generateReport}
+          idPrefix={ID_PREFIX}
         />
         {this.renderEditItemForm()}
       </div>
