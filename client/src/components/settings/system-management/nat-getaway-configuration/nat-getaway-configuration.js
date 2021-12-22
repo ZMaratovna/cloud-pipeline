@@ -85,6 +85,10 @@ export default class NATGetaway extends React.Component {
 
   componentDidUpdate () {
     this.props.handleModified(this.tableContentChanged);
+  };
+
+  componentWillUnmount () {
+    this.props.handleModified(false);
   }
 
   loadRoutes = () => {
